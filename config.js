@@ -10,6 +10,16 @@ const config = {
    */
   tmpFolder: "./uploads",
 
+  /**
+   * this is the default width used by sharp to resize the incomming image
+   */
+  defaultWidth: 615,
+
+   /**
+   * this is the default height used by sharp to resize the incomming image
+   */
+  defaultHeight: 800,
+
 };
 
 module.exports = config;
