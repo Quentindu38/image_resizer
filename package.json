@@ -1,0 +1,22 @@
+{
+  "name": "resizer",
+  "version": "0.0.0",
+  "private": true,
+  "main": "startApp.js",
+  "scripts": {
+    "start": "concurrently \"nodemon ./bin/www\" \"electron .\" ",
+    "_start_": "electron ."
+  },
+  "dependencies": {
+    "concurrently": "^6.2.0",
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "electron": "^13.1.8",
+    "express": "~4.16.1",
+    "morgan": "~1.9.1",
+    "multer": "^1.4.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.12"
+  }
+}
