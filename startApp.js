@@ -10,6 +10,7 @@ const createWindow = () => {
   });
 
   win.loadURL("http://localhost:3000");
+  win.setMenuBarVisibility(false);
 };
 
 app.whenReady().then(() => {
