@@ -1,143 +1,118 @@
-window.onload = () =>{
-  const uploadImagesForm = document.querySelector("#uploadImagesForm");
-  const imagesToUploadInput = document.querySelector("#imagesToUploadInput");
-  const skuInput = document.querySelector("#skuInput");
-  const topCategoryInput = document.querySelector("#topCategoryInput");
-  const uploadImagesBtn = document.querySelector("#uploadImagesBtn");
+window.onload = () => {
+  const previewResizedSection = document.querySelector(
+    "#previewResizedSection"
+  );
+  const sendResizeCmdBtn = document.querySelector("#sendResizeCmdBtn");
   const previewSection = document.querySelector("#previewSection");
+  const changeCatalogFolderCmdBtn = document.querySelector(
+    "#changeCatalogFolderCmdBtn"
+  );
+  const catalogFolder = document.querySelector("#catalogFolder");
 
-  uploadImagesBtn.addEventListener("click", (event) => {
+  getImages("/catalog", previewSection);
+  getImages("/catalog/resized", previewResizedSection);
+
+  sendResizeCmdBtn.addEventListener("click", (event) => {
     event.preventDefault();
-    const formData = new FormData(uploadImagesForm);
 
-    if(imagesToUploadInput.files.length == 0) {
-      Swal.fire(
-        'Data not provided',
-        'Please select at least one image to upload',
-        'error'
-      );
-      return;
-    }
-
-    if(!formData.get('coverImage')) {
-      Swal.fire(
-        'Data not provided',
-        'Please set an image as the cover image',
-        'error'
-      );
-      return;
-    }
-
-    if(skuInput.value == "") {
-      Swal.fire(
-        'Data not provided',
-        'Please enter the top category name - It\'s needed to upload images to the right folder',
-        'error'
-      );
-      return;
-    }
-    if(topCategoryInput.value == "") {
-      Swal.fire(
-        'Data not provided',
-        'Please enter the sku name - It\'s needed to upload images to the right folder',
-        'error'
-      );
-      return;
-    }
-
-
-    fetch('/upload', {
-      method: "POST",
-      body: formData,
-    }).then(data => {
-
-      if(data.status != 200) {
-        throw new Error("An error occurs - please try again");
-      }
-
-      Swal.fire(
-        'Youupi. Uploaded',
-        'Images have been uploaded to the server successfully',
-        'success',
-
-      ).then(() => {
-        imagesToUploadInput.value = null;
-        topCategoryInput.value = null;
-        skuInput.value = null;
-        previewSection.innerHTML = "";
-      });
-    }).catch(err => {
-      Swal.fire(
-        'An error occurs',
-        err.message,
-        'success'
-      );
+    fetch("/catalog/resizeAll", {
+      method: "GET",
     })
+      .then((data) => {
+        if (data.status != 200) {
+          throw new Error("An error occurs - please try again");
+        }
 
-  });
-
-  imagesToUploadInput.addEventListener("change", (event) => {
-
-    const filesCount = imagesToUploadInput.files.length;
-    previewSection.innerHTML = "";
-    for(let i=0; i<filesCount; i++) {
-      const file = imagesToUploadInput.files[i];
-      const tmpPath = URL.createObjectURL(file);
-
-      if(/image/.test(file.type) == false) {
         Swal.fire(
-          'Invalid file',
-          `${file.name} is not a valid image file`,
-          'error'
+          "Youupi. Uploaded",
+          "Images have been resized successfully",
+          "success"
         );
-        uploadImagesBtn.setAttribute("disabled", true);
-        return;
-      }
 
-      const previewContainer = document.createElement("div");
-      previewContainer.classList = "col-lg-3 col-sm-6 col-12"
-
-      const previewCard = document.createElement("div");
-      previewCard.classList = "m-1 card";
-
-      const imageElement = new Image();
-      imageElement.src = tmpPath;
-      imageElement.classList = "card-img-top"
-
-      const previewCardBody = document.createElement('div');
-      previewCardBody.className = "card-body";
-
-      const coverInputContainer = document.createElement('div');
-      coverInputContainer.className = "input-group";
-
-      const coverInputLabel = document.createElement('label');
-      coverInputLabel.innerText = "Set as cover image";
-      coverInputLabel.setAttribute("for", file.name);
-
-      const coverInputFieldContainer = document.createElement('div');
-      coverInputContainer.className = "input-group-text";
-
-      const coverInput = document.createElement('input');
-      coverInput.type = 'radio';
-      coverInput.name = 'coverImage';
-      coverInput.value = file.name;
-      coverInput.id = file.name;
-
-      imageElement.addEventListener('click', (event) => {
-        event.currentTarget.nextSibling.children[0].children[0].checked = true;
+        getImages("/catalog/resized", previewResizedSection);
+      })
+      .catch((err) => {
+        Swal.fire("An error occurs", err.message, "success");
       });
-
-
-      coverInputFieldContainer.appendChild(coverInput)
-      coverInputContainer.appendChild(coverInputFieldContainer);
-      coverInputContainer.appendChild(coverInputLabel);
-
-      previewCard.appendChild(imageElement);
-      previewCard.appendChild(coverInputContainer);
-      previewContainer.appendChild(previewCard);
-      previewSection.appendChild(previewContainer);
-      uploadImagesBtn.removeAttribute("disabled");
-    }
   });
 
-}
+  changeCatalogFolderCmdBtn.addEventListener("click", (event) => {
+    event.preventDefault();
+
+    if (catalogFolder.value == "") {
+      Swal.fire(
+        "No folder set",
+        "Please set a folder string before continue",
+        "error"
+      );
+      return;
+    }
+
+    const data = { catalogFolder: catalogFolder.value };
+    console.log(data);
+    fetch("/catalog/catalogFolder", {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: { "Content-Type": "application/json" },
+    })
+      .then((data) => {
+        Swal.fire("Cool :)", "Folder changed successfully", "success").then(
+          () => {
+            getImages("/catalog", previewSection);
+            getImages("/catalog/resized", previewResizedSection);
+          }
+        );
+      })
+      .catch((error) => {
+        console.log(error);
+        Swal.fire("Error :(", error.message, "error");
+      });
+  });
+
+  function getImages(url, containerPane) {
+    containerPane.innerHTML = "";
+    fetch(url).then(async (data) => {
+      const catalog = await data.json();
+      for (let topCategory in catalog) {
+        const topCategoryTitle = topCategory;
+        topCategory = catalog[topCategory];
+        for (let sku in topCategory) {
+          const skuTitle = sku;
+          sku = topCategory[sku];
+          for (let color in sku) {
+            const title = document.createElement("h6");
+            const colorTitle = color;
+            title.innerText = `${topCategoryTitle}/${skuTitle}/${colorTitle}`;
+            containerPane.appendChild(title);
+            color = sku[color];
+            const container = document.createElement("div");
+            container.classList = "row m-0";
+            containerPane.appendChild(container);
+            for (let url of color) {
+              showPreview(url, container);
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function showPreview(url, container) {
+    const previewContainer = document.createElement("div");
+    previewContainer.classList = "col-lg-3 col-sm-6 col-12";
+
+    const previewCard = document.createElement("div");
+    previewCard.classList = "m-1 card";
+
+    const imageElement = new Image();
+    imageElement.src = url;
+    imageElement.classList = "card-img-top";
+
+    const previewCardBody = document.createElement("div");
+    previewCardBody.className = "card-body";
+
+    previewCard.appendChild(imageElement);
+    previewContainer.appendChild(previewCard);
+    container.appendChild(previewContainer);
+  }
+};

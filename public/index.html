@@ -89,7 +89,20 @@
               aria-selected="false"
             >
               <i class="fas fa-fw fa-table"></i>
-              <span>Whatsapp resize</span>
+              <span>Resized Images</span>
+            </a>
+
+            <a
+              class="nav-link"
+              id="v-pills-settings-tab"
+              data-toggle="pill"
+              href="#v-pills-settings"
+              role="tab"
+              aria-controls="v-pills-settings"
+              aria-selected="false"
+            >
+              <i class="fas fa-fw fa-cog"></i>
+              <span>Settings</span>
             </a>
           </div>
         </div>
@@ -107,92 +120,94 @@
                 role="tabpanel"
                 aria-labelledby="v-pills-resize-tab"
               >
-                <form
-                  action=""
-                  enctype="multipart/form-data"
-                  id="uploadImagesForm"
-                >
-                  <div class="card">
-                    <div class="card-header"><h4>Load file to resize</h4></div>
-
-                    <div class="card-body">
-                      <div class="row">
-                        <div class="col-4">
-                          <div class="form-group">
-                            <label for="images" class="col-form-label"
-                              >Select images to upload</label
-                            >
-                            <div>
-                              <input
-                                type="file"
-                                class="form-control"
-                                name="images"
-                                multiple
-                                accept="image/*"
-                                id="imagesToUploadInput"
-                              />
-                            </div>
-                          </div>
-                          <div class="form-group">
-                            <label for="images" class="col-form-label"
-                              >Top Category</label
-                            >
-                            <div>
-                              <input
-                                type="text"
-                                class="form-control"
-                                name="topCategory"
-                                placeholder="Example: X4"
-                                required
-                                id="topCategoryInput"
-                              />
-                            </div>
-                          </div>
-                          <div class="form-group">
-                            <label for="images" class="col-form-label"
-                              >SKU</label
-                            >
-                            <div>
-                              <input
-                                type="text"
-                                class="form-control"
-                                name="sku"
-                                placeholder="Example: X4-105"
-                                required
-                                id="skuInput"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        <div class="col-8">
-                          <h5>Preview</h5>
-                          <div
-                            id="previewSection"
-                            class="row"
-                            style="height: 450px; overflow-y: auto"
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="card-footer">
+                <div class="card">
+                  <div class="card-header">
+                    <div class="row">
+                      <h4 class="col">
+                        <i class="fas fa-fw fa-chart-area"></i> File to resize
+                      </h4>
                       <button
                         class="btn btn-outline-primary"
-                        id="uploadImagesBtn"
+                        id="sendResizeCmdBtn"
                       >
-                        Upload
+                        Resize Now
                       </button>
                     </div>
                   </div>
-                </form>
+
+                  <div class="card-body">
+                    <div
+                      id="previewSection"
+                      style="height: 450px; overflow-y: auto"
+                    ></div>
+                  </div>
+                </div>
               </div>
+
               <div
                 class="tab-pane fade"
                 id="v-pills-whatsapp"
                 role="tabpanel"
                 aria-labelledby="v-pills-whatsapp-tab"
               >
-                Whatsapp
+                <div class="card">
+                  <div class="card-header">
+                    <h4><i class="fas fa-fw fa-table"></i> Resized images</h4>
+                  </div>
+
+                  <div class="card-body">
+                    <div
+                      id="previewResizedSection"
+                      style="height: 450px; overflow-y: auto"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="tab-pane fade"
+                id="v-pills-settings"
+                role="tabpanel"
+                aria-labelledby="v-pills-settings-tab"
+              >
+                <div class="card">
+                  <div class="card-header">
+                    <h4><i class="fas fa-fw fa-cog"></i> Settings</h4>
+                  </div>
+
+                  <div class="card-body">
+                    <div>
+                      <div class="form-group">
+                        <label for="basic-url"
+                          >Your Local folder to check at</label
+                        >
+                        <br>
+                        <small>Remember: Inside this folder you should follow this folder struscture: 
+                          <strong>topCategory/SKU/COLOR/</strong>
+                        </small>
+                        <div class="input-group mb-3">
+                          <div class="input-group-prepend">
+                            <span class="input-group-text" id="basic-addon3"
+                              >Eg: C:/users/&lt;username&gt;/Desktop/&lt;folder&gt;</span
+                            >
+                          </div>
+                          <input
+                            type="text"
+                            class="form-control"
+                            aria-describedby="basic-addon3"
+                            id="catalogFolder"
+                          />
+                        </div>
+                        <button
+                        class="btn btn-outline-primary"
+                        id="changeCatalogFolderCmdBtn"
+                      >
+                        Save
+                      </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
