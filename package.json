@@ -5,7 +5,7 @@
   "main": "startApp.js",
   "scripts": {
     "start": "concurrently \"nodemon ./bin/www\" \"electron .\" ",
-    "_start_": "electron ."
+    "electron": "electron ."
   },
   "dependencies": {
     "concurrently": "^6.2.0",

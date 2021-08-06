@@ -1,5 +1,5 @@
 const { app, BrowserWindow } = require("electron");
-// const { server, port } = require("./bin/www");
+const { server, port } = require("./bin/www");
 
 const createWindow = () => {
   const win = new BrowserWindow({
@@ -14,6 +14,6 @@ const createWindow = () => {
 };
 
 app.whenReady().then(() => {
-  // server.listen(port); // express.js server
+  server.listen(port); // express.js server
   createWindow();
 });
