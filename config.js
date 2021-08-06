@@ -20,6 +20,11 @@ const config = {
    */
   defaultHeight: 800,
 
+  /**
+   * 
+   */
+   catalogFolder: "./catalog"
+
 };
 
 module.exports = config;
