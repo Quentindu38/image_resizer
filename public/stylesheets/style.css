@@ -19,3 +19,64 @@ label{
 .form-tag {
   width: 80%;
 }
+
+#app-console {
+  width: 100%;
+  height: 350px;
+  background-color: #000731;
+  color: white;
+  border-radius: 5px;
+  overflow-y: auto !important;
+}
+
+#app-console .console {
+  font-family: "MD CONSOLE";
+  font-size: 12px;
+}
+
+#app-console p{ 
+  margin: 0px;
+}
+
+@font-face {
+  font-family: "MD LIGHT";
+  src: url("/md_fonts/Program-Light.otf");
+}
+
+@font-face {
+  font-family: "MD CONSOLE";
+  src: url("/md_fonts/Program-Primitiv.otf");
+}
+
+.top-category-divider {
+  color: grey;
+}
+
+*:not(.fas) {
+  font-family: "MD LIGHT" !important;
+}
+
+
+/* width */
+::-webkit-scrollbar {
+  width: 8px;
+  margin-right: 2px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: rgb(245, 245, 255);
+  border-radius: 5px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #007bff;
+  border-radius: 5px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #006ce0;
+  border-radius: 5px;
+}

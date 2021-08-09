@@ -3,7 +3,7 @@ const config = {
   /**
    * this is the final destination of all resized images
    */
-  resizedImagesDestination: "./resizedImages",
+  destinationFolder: "C:/Users/Christian/Desktop/Resized",
 
   /**
    * this is the temporary folder used by multer to save files in the incomming request
@@ -23,7 +23,12 @@ const config = {
   /**
    * 
    */
-   catalogFolder: "./catalog"
+  sourceFolder: "./catalog",
+
+  /**
+   * 
+   */
+  server: "http://localhost:5000",
 
 };
 
