@@ -85,7 +85,7 @@ window.onload = () => {
       headers: { "Content-Type": "application/json" },
     })
       .then((data) => {
-        Swal.fire("Cool :)", "Folder changed successfully", "success").then(
+        Swal.fire("Cool :)", "Configuration saved successfully. You should close the app and start again", "success").then(
           () => {
             getImages("/catalog", previewSection, "original");
             getImages("/catalog/resized", previewResizedSection, "resized");
@@ -244,6 +244,7 @@ window.onload = () => {
     });
     
     socket.on('uploadingError', (message) => {
+      console.log(message);
       outputMessage(message.message || "sync error", "uploading", "red");
     });
     

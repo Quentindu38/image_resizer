@@ -4,13 +4,10 @@ const fs = require("fs");
 const path = require("path");
 const FormData = require("form-data");
 const chokidar = require("chokidar");
-const config = require("../config/config");
 const dirTree = require("directory-tree");
 const wget = require("node-wget");
-const { destinationFolder } = require("../config/config");
-require("dotenv").config();
-
-let remoteSyncServer = config.server;
+const { destinationFolder, remoteServerURL } = require("../config/config.json");
+const config = require("../config/config");
 let socket = null;
 
 const fsWatcher = chokidar.watch(destinationFolder, {
@@ -21,7 +18,7 @@ const fsWatcher = chokidar.watch(destinationFolder, {
 
 async function startSync() {
   axios
-    .get(remoteSyncServer + "/sync/handshake")
+    .get(remoteServerURL + "/sync/handshake")
     .then((data) => {
       doUpdate();
     })
@@ -103,9 +100,9 @@ async function syncWithServer(path, formData) {
   socket?.emit("uploadingStart", `started syncing ${path}`);
 
   await axios
-    .post(remoteSyncServer + "/sync/upload", formData, {
+    .post(remoteServerURL + "/sync/upload", formData, {
       headers: {
-        "x-api-key": process.env.PRIVATE_KEY,
+        "x-api-key": config.PRIVATE_KEY,
         ...formData.getHeaders(),
       },
       maxContentLength: Infinity,
@@ -115,6 +112,7 @@ async function syncWithServer(path, formData) {
       socket?.emit("uploadingEnd", `${path} synced with remote server`);
     })
     .catch((error) => {
+      console.log(error.response.data);
       socket?.emit("uploadingError", `failled to sync ${path}`);
       socket?.emit("uploadingError", error);
     });
@@ -161,7 +159,7 @@ function syncWithCheck(paths) {
     };
 
     await axios
-      .post(remoteSyncServer + "/sync/autoCheck", changeData, {
+      .post(remoteServerURL + "/sync/autoCheck", changeData, {
         headers: { "Content-Type": "application/json" },
       })
       .then((reply) => {
@@ -177,13 +175,13 @@ function syncWithCheck(paths) {
 }
 
 async function pullFromRemoteServer() {
-  await axios.get(remoteSyncServer + "/sync/getTree").then((reply) => {
+  await axios.get(remoteServerURL + "/sync/getTree").then((reply) => {
     const paths = reply.data;
 
     paths.forEach(async (pathObject) => {
       const fullPath = path.normalize(destinationFolder + pathObject.path);
       const url =
-        remoteSyncServer + "/sync/getFile?filePath=" + pathObject.path;
+        remoteServerURL + "/sync/getFile?filePath=" + pathObject.path;
       const dirPath = path.dirname(fullPath);
       if (!fs.existsSync(dirPath)) {
         fs.mkdirSync(dirPath, { recursive: true });

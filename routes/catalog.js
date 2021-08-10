@@ -6,18 +6,15 @@ const path = require("path");
 const mime = require('mime');
 const sharp = require('sharp');
 const clientAppConfig = require("../config/config.json");
-config.sourceFolder = clientAppConfig.sourceFolder;
-config.destinationFolder = clientAppConfig.destinationFolder;
-config.server = clientAppConfig.remoteServerURL;
 
 router.get("/", (req, res, next) => {
   
-  const paths = getFiles(config.sourceFolder);
+  const paths = getFiles(clientAppConfig.sourceFolder);
   const folderStructure = {};
   const host = req.protocol+"://"+req.get('host');
   
   paths.forEach(pathObject => {
-    pathObject.path = path.normalize(pathObject.path).replace(path.normalize(config.sourceFolder), "");
+    pathObject.path = path.normalize(pathObject.path).replace(path.normalize(clientAppConfig.sourceFolder), "");
     const pathChunk = pathObject.path.split(/(\\|\/)/).filter(p => p!= "\\" && p != "");
     const [topCategory, sku, color, filename] = pathChunk;
 
@@ -38,12 +35,12 @@ router.get("/", (req, res, next) => {
 
 router.get("/resized", (req, res, next) => {
   
-  const paths = getFiles(config.destinationFolder);
+  const paths = getFiles(clientAppConfig.destinationFolder);
   const folderStructure = {};
   const host = req.protocol+"://"+req.get('host');
 
   paths.forEach(pathObject => {
-    pathObject.path = path.normalize(pathObject.path).replace(path.normalize(config.destinationFolder), "");
+    pathObject.path = path.normalize(pathObject.path).replace(path.normalize(clientAppConfig.destinationFolder), "");
     const pathChunk = pathObject.path.split(/(\\|\/)/).filter(p => p!= "\\" && p!= "");
     const [topCategory, sku, color, filename] = pathChunk;
 
@@ -71,14 +68,17 @@ router.post('/config', (req, res) => {
     remoteServerURL: requestData.remoteServerURL
   }
 
-  fs.writeFileSync("./config/config.json", JSON.stringify(data));
-
-  res.json({success: true});
+  try {
+    fs.writeFileSync(path.join(__dirname, "../config/config.json"), JSON.stringify(data));
+    res.json({success: true});
+  } catch (error) {
+    res.status(500).json({error: error});
+  }
 
 })
 
 router.get('/resizeAll', (req, res, next) => {
-  const paths = getFiles(config.sourceFolder);
+  const paths = getFiles(clientAppConfig.sourceFolder);
   paths.forEach(pathObject => {
     resize(pathObject.path, pathObject.name);
   })
@@ -88,9 +88,9 @@ router.get('/resizeAll', (req, res, next) => {
 
 router.get('/getConfig', (req, res, next) => {
   res.json({
-    sourceFolder: config.sourceFolder,
-    destinationFolder: config.destinationFolder,
-    remoteServerURL: config.server,
+    sourceFolder: clientAppConfig.sourceFolder,
+    destinationFolder: clientAppConfig.destinationFolder,
+    remoteServerURL: clientAppConfig.remoteServerURL,
   });
 })
 
@@ -122,7 +122,7 @@ function resize(filePath, filename) {
   let folderPath = path.dirname(filePath);
   const pathChunk = folderPath.split(/(\\|\/)/);
   folderPath = pathChunk.splice(pathChunk.length-6).join("");
-  folderPath = config.destinationFolder+folderPath;
+  folderPath = clientAppConfig.destinationFolder+folderPath;
   const fullPath = path.join(folderPath, filename);
 
   if (!fs.existsSync(folderPath)) {

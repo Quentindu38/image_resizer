@@ -2,10 +2,10 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const catalogRouter = require('./routes/catalog');
-const config = require('./config/config');
 var http = require('http');
 const socketio = require('socket.io');
 const { setSocketSync } = require('./routes/sync');
+const { destinationFolder, sourceFolder } = require("./config/config.json");
 
 const app = express();
 
@@ -28,8 +28,8 @@ io.on("connection", async (socket) => {
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use("/images", express.static(config.sourceFolder));
-app.use("/resized", express.static(config.destinationFolder));
+app.use("/images", express.static(sourceFolder));
+app.use("/resized", express.static(destinationFolder));
 
 app.use('/catalog', catalogRouter)
 
