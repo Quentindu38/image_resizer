@@ -10,20 +10,11 @@ const { destinationFolder, remoteServerURL } = require("../config/config.json");
 const config = require("../config/config");
 const Queue = require('better-queue');
 const chalk = require("chalk");
-const {parentPort, workerData} = require("worker_threads");
+const {parentPort} = require("worker_threads");
 
-parentPort.once("message", (cmd) => {
 
-  if(cmd === "startSync") {
-    startSync();
-  }
-});
+startSync();
 
-const fsWatcher = chokidar.watch(destinationFolder, {
-  awaitWriteFinish: false,
-  persistent: true,
-  usePolling: true,
-});
 
 async function startSync() {
   axios
@@ -36,6 +27,12 @@ async function startSync() {
       console.log("remote server is not running");
       return 0;
     });
+
+  const fsWatcher = chokidar.watch(destinationFolder, {
+    awaitWriteFinish: false,
+    persistent: true,
+    usePolling: true,
+  });
 
   fsWatcher.on("all", async (event, path) => {
     let type = event == "unlinkDir" || event == "addDir" ? "dir" : "file";
@@ -105,8 +102,6 @@ async function syncWithServer(path, formData) {
     return;
   }
 
-  console.log(`started syncing ${path}`);
-
   const reply = await axios
     .post(remoteServerURL + "/sync/upload", formData, {
       headers: {
@@ -128,7 +123,6 @@ async function syncWithServer(path, formData) {
     return reply;
 }
 
-// FIXME
 function syncWithCheck(paths) {
   paths.forEach(async (pathObject) => {
     const fullPath = pathObject.path;
@@ -214,20 +208,16 @@ const downloadQueue = new Queue(processSyncJobForDownloads);
 
 
 uploadQueue.on('task_finish', function (taskId, result, stats) {
-  // console.log(`[${chalk.magenta.bold((stats.elapsed/1000).toFixed(1) +"s")}] ${chalk.blueBright(result)}`);
   parentPort.postMessage({type: "message", message: `[${(stats.elapsed/1000).toFixed(1) +"s"}][up] ${chalk.blueBright(result)}`});
 });
 uploadQueue.on('task_failed', function (taskId, err, stats) {
-  // console.log(`[${chalk.magenta.bold((stats.elapsed/1000).toFixed(1) +"s")}] ${chalk.redBright(err)}`);
   parentPort.postMessage({type: "message", message: `[${(stats.elapsed/1000).toFixed(1) +"s"}][up] ${chalk.redBright(err)}`});
 });
 
 downloadQueue.on('task_finish', function (taskId, result, stats) {
-  // console.log(`[${chalk.cyan.bold((stats.elapsed/1000).toFixed(1) +"s")}] ${chalk.blueBright(result)}`);
   parentPort.postMessage({type: "message", message: `[${(stats.elapsed/1000).toFixed(1) +"s"}][down] ${chalk.blueBright(result)}`});
 });
 downloadQueue.on('task_failed', function (taskId, err, stats) {
-  // console.log(`[${chalk.cyan.bold((stats.elapsed/1000).toFixed(1) +"s")}] ${chalk.redBright(err)}`);
   parentPort.postMessage({type: "message", message: `[${(stats.elapsed/1000).toFixed(1) +"s"}][down] ${chalk.redBright(err)}`});
 });
 

@@ -1,0 +1,112 @@
+doctype html
+html(lang='en')
+  head
+    meta(charset='utf-8')
+    meta(http-equiv='X-UA-Compatible' content='IE=edge')
+    meta(name='viewport' content='width=device-width, initial-scale=1, shrink-to-fit=no')
+    meta(name='description' content='')
+    meta(name='author' content='')
+    title Resize App
+    link(rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css' integrity='sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w==' crossorigin='anonymous' referrerpolicy='no-referrer')
+    link(href='/stylesheets/style.css' rel='stylesheet')
+    link(rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.min.css' integrity='sha512-Mk4n0eeNdGiUHlWvZRybiowkcu+Fo2t4XwsJyyDghASMeFGH6yUXcdDI3CKq12an5J8fq4EFzRVRdbjerO3RmQ==' crossorigin='anonymous' referrerpolicy='no-referrer')
+    link(rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css' integrity='sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm' crossorigin='anonymous')
+    link(href='https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css' rel='stylesheet' integrity='sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC' crossorigin='anonymous')
+    script(src='https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js' integrity='sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM' crossorigin='anonymous')
+  body#page-top
+    #wrapper
+      #accordionSidebar.navbar-nav.bg-dark.sidebar.sidebar-dark.accordion(role='tablist')
+        a.sidebar-brand.d-flex.align-items-center.justify-content-center(href='index.html')
+          .sidebar-brand-icon.rotate-n-15
+            i.fas.fa-crop-alt
+          .sidebar-brand-text.mx-3 Resize App
+        hr.sidebar-divider
+        .sidebar-heading Options
+        .nav-item
+          #v-pills-tab.nav.flex-column.nav-pills(role='tablist' aria-orientation='vertical')
+            a#v-pills-home-tab.nav-link.active(data-toggle='pill' href='#v-pills-resize' role='tab' aria-controls='v-pills-resize' aria-selected='true')
+              i.fas.fa-fw.fa-chart-area
+              span Resize & Upload
+            a#v-pills-whatsapp-tab.nav-link(data-toggle='pill' href='#v-pills-whatsapp' role='tab' aria-controls='v-pills-whatsapp' aria-selected='false')
+              i.fas.fa-fw.fa-table
+              span Resized Images
+            a#v-pills-settings-tab.nav-link(data-toggle='pill' href='#v-pills-settings' role='tab' aria-controls='v-pills-settings' aria-selected='false')
+              i.fas.fa-fw.fa-cog
+              span Settings
+            a#v-pills-terminal-tab.nav-link(data-toggle='pill' href='#v-pills-terminal' role='tab' aria-controls='v-pills-terminal' aria-selected='false')
+              i.fas.fa-fw.fa-terminal
+              span Terminal
+        hr.sidebar-divider.d-none.d-md-block
+      #content-wrapper.d-flex.flex-column
+        #content.tab-content
+          .container.mt-5
+            #v-pills-tabContent.tab-content
+              #v-pills-resize.tab-pane.fade.show.active(role='tabpanel' aria-labelledby='v-pills-resize-tab')
+                .card
+                  .card-header
+                    .row
+                      h4.col
+                        i.fas.fa-fw.fa-chart-area
+                        |  File to resize
+                      .col.text-right
+                        button#sendResizeCmdBtn.btn.btn-outline-primary
+                          | Resize Now
+                  .card-body
+                    #previewSection(style='height: 450px; overflow-y: auto')
+              #v-pills-whatsapp.tab-pane.fade(role='tabpanel' aria-labelledby='v-pills-whatsapp-tab')
+                .card
+                  .card-header
+                    h4
+                      i.fas.fa-fw.fa-table
+                      |  Resized images
+                  .card-body
+                    #previewResizedSection(style='height: 450px; overflow-y: auto')
+              #v-pills-settings.tab-pane.fade(role='tabpanel' aria-labelledby='v-pills-settings-tab')
+                .card
+                  .card-header
+                    h4
+                      i.fas.fa-fw.fa-cog
+                      |  Settings
+                  .card-body
+                    div
+                      .form-group
+                        label(for='basic-url') The source folder to look at for original images
+                        br
+                        small
+                          | Remember: Inside this folder you should follow this folder struscture: 
+                          strong topCategory/SKU/COLOR/
+                        .input-group.mb-3
+                          .input-group-prepend
+                            span#basic-addon3.input-group-text Eg: C:/users/<username>/Desktop/<folder>
+                          input#sourceFolder.form-control(type='text' aria-describedby='basic-addon3')
+                      .form-group
+                        label(for='basic-url') Destination folder to store resized images
+                        br
+                        .input-group.mb-3
+                          .input-group-prepend
+                            span#basic-addon3.input-group-text Eg: C:/users/<username>/Desktop/<folder>
+                          input#destinationFolder.form-control(type='text' aria-describedby='basic-addon3')
+                      .form-group
+                        label(for='basic-url') Remote Server URL
+                        br
+                        .input-group.mb-3
+                          .input-group-prepend
+                            span#basic-addon3.input-group-text Eg: https://shouldbeyourremoteserver.com
+                          input#remoteServerURL.form-control(type='text' aria-describedby='basic-addon3')
+                      button#submitConfigurationBtn.btn.btn-outline-primary
+                        | Save
+              #v-pills-terminal.tab-pane.fade(role='tabpanel' aria-labelledby='v-pills-terminal-tab')
+                .card
+                  .card-header
+                    h4
+                      i.fas.fa-fw.fa-terminal
+                      |  Terminal
+                  .card-body
+                    #app-console.card
+                      .card-content.console
+    script(type='text/javascript' src='/javascripts/jquery-3.6.0.min.js')
+    script(src='/javascripts/popper.min.js' crossorigin='anonymous')
+    script(src='/javascripts/bootstrap.min.js' crossorigin='anonymous')
+    script(type='text/javascript' src='/javascripts/socket.io.js')
+    script(src='/javascripts/sweetalert2.js')
+    script(src='/javascripts/main.js' defer='')

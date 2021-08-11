@@ -6,6 +6,7 @@ const path = require("path");
 const mime = require('mime');
 const sharp = require('sharp');
 const clientAppConfig = require("../config/config.json");
+const { Worker } = require('worker_threads');
 
 router.get("/", (req, res, next) => {
   
@@ -36,7 +37,7 @@ router.get("/", (req, res, next) => {
 router.get("/resized", (req, res, next) => {
   
   const paths = getFiles(clientAppConfig.destinationFolder);
-  const folderStructure = {};
+  const images = [];
   const host = req.protocol+"://"+req.get('host');
 
   paths.forEach(pathObject => {
@@ -44,19 +45,10 @@ router.get("/resized", (req, res, next) => {
     const pathChunk = pathObject.path.split(/(\\|\/)/).filter(p => p!= "\\" && p!= "");
     const [topCategory, sku, color, filename] = pathChunk;
 
-    if(!folderStructure.hasOwnProperty(topCategory)) {
-      folderStructure[topCategory] = {};
-    }
-    if(!folderStructure[topCategory].hasOwnProperty(sku)) {
-      folderStructure[topCategory][sku] = {};
-    }
-    if(!folderStructure[topCategory][sku].hasOwnProperty(color)) {
-      folderStructure[topCategory][sku][color] = [];
-    }
-    folderStructure[topCategory][sku][color].push( host+`/resized/${topCategory}/${sku}/${color}/${filename}`);
+    images.push( host+`/resized/${topCategory}/${sku}/${color}/${filename}`);
   })
   
-  return res.json(folderStructure);
+  return res.json(images);
 });
 
 router.post('/config', (req, res) => {
@@ -79,10 +71,8 @@ router.post('/config', (req, res) => {
 
 router.get('/resizeAll', (req, res, next) => {
   const paths = getFiles(clientAppConfig.sourceFolder);
-  paths.forEach(pathObject => {
-    resize(pathObject.path, pathObject.name);
-  })
-
+  const worker = new Worker(path.join(__dirname, "../", "workers", "resizeWorker.js"));
+  worker.postMessage(paths);
   return res.status(200).json({success: true});
 });
 

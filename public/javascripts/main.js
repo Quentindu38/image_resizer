@@ -10,42 +10,48 @@ window.onload = () => {
   const previewResizedSection = document.querySelector(
     "#previewResizedSection"
   );
-  const sendResizeCmdBtn = document.querySelector("#sendResizeCmdBtn");
-  const previewSection = document.querySelector("#previewSection");
+  const sendResizeCmdBtn = document.querySelectorAll(".sendResizeCmdBtn");
   const submitConfigurationBtn = document.querySelector(
     "#submitConfigurationBtn"
   );
   const sourceFolder = document.querySelector("#sourceFolder");
   const destinationFolder = document.querySelector("#destinationFolder");
   const remoteServerURL = document.querySelector("#remoteServerURL");
+  const loadMoreBtnNext = document.querySelector("#loadMoreBtnNext");
+  const loadMoreBtnPrev = document.querySelector("#loadMoreBtnPrev");
 
-  getImages("/catalog", previewSection, "original");
-  getImages("/catalog/resized", previewResizedSection, "resized");
+  let images = [];
+  let lastStop = 0;
+  const limitLoaded = 50;
 
-  sendResizeCmdBtn.addEventListener("click", (event) => {
-    event.preventDefault();
+  getImages("/catalog/resized");
 
-    fetch("/catalog/resizeAll", {
-      method: "GET",
-    })
-      .then((data) => {
-        if (data.status != 200) {
-          throw new Error("An error occurs - please try again");
-        }
-
-        Swal.fire(
-          "Youupi. Uploaded",
-          "Images have been resized successfully",
-          "success"
-        );
-
-        getImages("/catalog", previewSection, "original");
-        getImages("/catalog/resized", previewResizedSection, "resized");
+  sendResizeCmdBtn.forEach((btn => 
+    btn.addEventListener("click", (event) => {
+      event.preventDefault();
+  
+      fetch("/catalog/resizeAll", {
+        method: "GET",
       })
-      .catch((err) => {
-        Swal.fire("An error occurs", err.message, "success");
-      });
-  });
+        .then((data) => {
+          if (data.status != 200) {
+            throw new Error("An error occurs - please try again");
+          }
+  
+          Swal.fire(
+            "Cool :)",
+            "The resize process has started. It'll will be running in the background. Don't close the app yet",
+            "success"
+          );
+  
+          getImages("/catalog/resized");
+        })
+        .catch((err) => {
+          Swal.fire("An error occurs", err.message, "success");
+        });
+    })
+  ));
+
 
   submitConfigurationBtn.addEventListener("click", (event) => {
     event.preventDefault();
@@ -87,14 +93,27 @@ window.onload = () => {
       .then((data) => {
         Swal.fire("Cool :)", "Configuration saved successfully. You should close the app and start again", "success").then(
           () => {
-            getImages("/catalog", previewSection, "original");
-            getImages("/catalog/resized", previewResizedSection, "resized");
+            getImages("/catalog/resized", previewResizedSection);
           }
         );
       })
       .catch((error) => {
         Swal.fire("Error :(", error.message, "error");
       });
+  });
+
+  loadMoreBtnNext.addEventListener("click", (event) => {
+    event.preventDefault();
+
+    feedPage(lastStop);
+  });
+  
+  loadMoreBtnPrev.addEventListener("click", (event) => {
+    event.preventDefault();
+
+    if(lastStop-limitLoaded > 0) {
+      feedPage(lastStop-limitLoaded);
+    }
   });
 
   (function getConfiguration() {
@@ -107,78 +126,27 @@ window.onload = () => {
     });
   })();
 
-  function getImages(url, containerPane, prefix="default") {
-    containerPane.innerHTML = "";
-
-    const accordion = document.createElement("div");
-    accordion.classList = "accordion accordion-flush";
-    accordion.id = prefix;
-
+  function getImages(url) {
     fetch(url).then(async (data) => {
       const catalog = await data.json();
-      for (let topCategory in catalog) {
-        const topCategoryTitle = topCategory;
-
-
-        const accordionItem = document.createElement("div");
-        accordionItem.classList = "accordion-item";
-
-        accordion.append(accordionItem); // append
-
-        const accordionHeader = document.createElement("h2");
-        accordionHeader.classList = "accordion-header";
-        accordionHeader.id = prefix+"heading"+topCategoryTitle;
-
-        accordionItem.append(accordionHeader); //append
-        
-        const accordionButton = document.createElement("button");
-        accordionButton.classList = "accordion-button collapsed";
-        accordionButton.setAttribute("data-bs-toggle", "collapse");
-        accordionButton.setAttribute("data-bs-target", "#"+prefix+topCategoryTitle);
-        accordionButton.setAttribute("aria-expanded", "false");
-
-        accordionButton.setAttribute("aria-controls", prefix+topCategoryTitle);
-        accordionButton.innerText = topCategoryTitle;
-
-        accordionHeader.appendChild(accordionButton); // append
-
-        const accordionContent = document.createElement("div");
-        accordionContent.id = prefix+topCategoryTitle;
-        accordionContent.classList = "accordion-collapse collapse";
-        accordionContent.setAttribute("aria-labelledby", prefix+"heading"+topCategoryTitle);
-        accordionContent.setAttribute("data-bs-parent", "#"+prefix);
-
-        accordionItem.appendChild(accordionContent);
-        
-        const accordionBody = document.createElement("div");
-        accordionBody.classList = "accordion-body";
-        accordionContent.appendChild(accordionBody);
-
-        topCategory = catalog[topCategory];
-        for (let sku in topCategory) {
-          const skuTitle = sku;
-          sku = topCategory[sku];
-          for (let color in sku) {
-            const title = document.createElement("h6");
-            const colorTitle = document.createElement('span');
-            colorTitle.innerText = color;
-            colorTitle.style.color = color;
-            title.innerText = `/${skuTitle}/`;
-            title.append(colorTitle);
-            accordionBody.appendChild(title);
-            color = sku[color];
-            const container = document.createElement("div");
-            container.classList = "row m-0";
-            containerPane.appendChild(container);
-            containerPane.appendChild(accordion);
-            accordionBody.appendChild(container);
-            for (let url of color) {
-              const r = showPreview(url, container);
-            }
-          }
-        }
-      }
+      lastStop = 0;
+      images = catalog;
+      feedPage();
     });
+  }
+
+  function feedPage(start = 0) {
+    lastStop = start+limitLoaded;
+
+    if(images.length <= lastStop) {
+      lastStop = images.length;
+    }
+
+    previewResizedSection.innerHTML = "";
+    let imagesToLoad = images.slice(start, lastStop);
+    for (let url of imagesToLoad) {
+      showPreview(url, previewResizedSection);
+    }
   }
 
   function showPreview(url, container) {
@@ -192,9 +160,6 @@ window.onload = () => {
     imageElement.src = url;
     imageElement.classList = "card-img-top";
 
-    const previewCardBody = document.createElement("div");
-    previewCardBody.className = "card-body";
-
     previewCard.appendChild(imageElement);
     previewContainer.appendChild(previewCard);
     container.appendChild(previewContainer);
@@ -207,8 +172,9 @@ window.onload = () => {
     appConsoleContainer.scrollTop(appConsole.height()+100);
     const date = new Date().toDateString();
     const output = $(
-      `<p>[${date}] [<span style='color: ${color}'>${status}</span>] ${message}</p>`
+      `<p>${message}</p>`
     );
+    appConsole.empty();
     appConsole.append(output);
   }
 
@@ -227,26 +193,14 @@ window.onload = () => {
       outputMessage(message, "socket", "yellow");
     });
     
-    socket.on('syncFolderChanged', (message) => {
-      outputMessage(message, "socket", "yellow");
+    socket.on('resizeOK', (message) => {
+      Swal.fire(
+        "Success",
+        "Resizing process completed",
+        "success"
+      );
     });
     
-    socket.on('syncStarted', (message) => {
-      outputMessage(message, "socket", "red");
-    });
-    
-    socket.on('uploadingStart', (message) => {
-      outputMessage(message, "syncing", "cyan");
-    });
-    
-    socket.on('uploadingEnd', (message) => {
-      outputMessage(message, "syncing", "#29b6f6");
-    });
-    
-    socket.on('uploadingError', (message) => {
-      console.log(message);
-      outputMessage(message.message || "sync error", "uploading", "red");
-    });
     
     socket.on('disconnect', (message) => {
       outputMessage("Disconnected. Reconnecting ...", "socket", "yellow");
