@@ -105,16 +105,33 @@ window.onload = () => {
   loadMoreBtnNext.addEventListener("click", (event) => {
     event.preventDefault();
 
-    feedPage(lastStop);
+    if(images.length > lastStop+limitLoaded) {
+      feedPage(lastStop);
+    }
   });
   
+  console.log(lastStop);
   loadMoreBtnPrev.addEventListener("click", (event) => {
     event.preventDefault();
 
     if(lastStop-limitLoaded > 0) {
-      feedPage(lastStop-limitLoaded);
+      feedPage(lastStop-2*limitLoaded);
     }
   });
+
+  function feedPage(start = 0) {
+    lastStop = start+limitLoaded;
+
+    if(images.length <= lastStop) {
+      lastStop = images.length;
+    }
+
+    previewResizedSection.innerHTML = "";
+    let imagesToLoad = images.slice(start, lastStop);
+    for (let url of imagesToLoad) {
+      showPreview(url, previewResizedSection);
+    }
+  }
 
   (function getConfiguration() {
     fetch('/catalog/getConfig').then(async(data) => {
@@ -133,20 +150,6 @@ window.onload = () => {
       images = catalog;
       feedPage();
     });
-  }
-
-  function feedPage(start = 0) {
-    lastStop = start+limitLoaded;
-
-    if(images.length <= lastStop) {
-      lastStop = images.length;
-    }
-
-    previewResizedSection.innerHTML = "";
-    let imagesToLoad = images.slice(start, lastStop);
-    for (let url of imagesToLoad) {
-      showPreview(url, previewResizedSection);
-    }
   }
 
   function showPreview(url, container) {
@@ -174,7 +177,7 @@ window.onload = () => {
     const output = $(
       `<p>${message}</p>`
     );
-    appConsole.empty();
+    // appConsole.empty();
     appConsole.append(output);
   }
 
