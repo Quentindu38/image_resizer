@@ -7,7 +7,9 @@
   "author": "Christian Barnabe CHABI",
   "scripts": {
     "concurrently": "concurrently \"nodemon ./bin/www\" \"electron .\" ",
-    "start": "electron ."
+    "start": "electron .",
+    "build": "npx electron-packager . resizer --icon=appIcon.ico",
+    "installer": "electron-installer-windows --src resizer-win32-x64/ --dest dist/installers/"
   },
   "dependencies": {
     "axios": "^0.21.1",
