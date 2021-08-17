@@ -1,22 +1,23 @@
 const router = require("express").Router();
 const fs = require("fs");
 const dirTree = require("directory-tree");
-const config = require("../config");
+const config = require("../config/config");
 const path = require("path");
 const mime = require('mime');
 const sharp = require('sharp');
-const catalogFolder = require("../config.json");
-config.catalogFolder = catalogFolder.catalogFolder;
+const clientAppConfig = require("../config/config.json");
+const { Worker } = require('worker_threads');
 
 router.get("/", (req, res, next) => {
   
-  const paths = getFiles(config.catalogFolder);
+  const paths = getFiles(clientAppConfig.sourceFolder);
   const folderStructure = {};
   const host = req.protocol+"://"+req.get('host');
   
   paths.forEach(pathObject => {
-    const pathChunk = pathObject.path.split(/(\\|\/)/).filter(p => p!= "\\");
-    const [topCategory, sku, color, filename] = pathChunk.slice(pathChunk.length-4);
+    pathObject.path = path.normalize(pathObject.path).replace(path.normalize(clientAppConfig.sourceFolder), "");
+    const pathChunk = pathObject.path.split(/(\\|\/)/).filter(p => p!= "\\" && p != "");
+    const [topCategory, sku, color, filename] = pathChunk;
 
     if(!folderStructure.hasOwnProperty(topCategory)) {
       folderStructure[topCategory] = {};
@@ -35,51 +36,52 @@ router.get("/", (req, res, next) => {
 
 router.get("/resized", (req, res, next) => {
   
-  const paths = getFiles(config.resizedImagesDestination);
-  const folderStructure = {};
+  const paths = getFiles(clientAppConfig.destinationFolder);
+  const images = [];
   const host = req.protocol+"://"+req.get('host');
 
   paths.forEach(pathObject => {
-    const pathChunk = pathObject.path.split(/(\\|\/)/).filter(p => p!= "\\");
-    pathChunk.shift();
+    pathObject.path = path.normalize(pathObject.path).replace(path.normalize(clientAppConfig.destinationFolder), "");
+    const pathChunk = pathObject.path.split(/(\\|\/)/).filter(p => p!= "\\" && p!= "");
     const [topCategory, sku, color, filename] = pathChunk;
 
-    if(!folderStructure.hasOwnProperty(topCategory)) {
-      folderStructure[topCategory] = {};
-    }
-    if(!folderStructure[topCategory].hasOwnProperty(sku)) {
-      folderStructure[topCategory][sku] = {};
-    }
-    if(!folderStructure[topCategory][sku].hasOwnProperty(color)) {
-      folderStructure[topCategory][sku][color] = [];
-    }
-    folderStructure[topCategory][sku][color].push( host+`/resized/${topCategory}/${sku}/${color}/${filename}`);
+    images.push( host+`/resized/${topCategory}/${sku}/${color}/${filename}`);
   })
   
-  return res.json(folderStructure);
+  return res.json(images);
 });
 
-router.post('/catalogFolder', (req, res) => {
+router.post('/config', (req, res) => {
   const requestData = req.body;
-  console.log("Changing folder");
 
   const data = {
-    catalogFolder: requestData.catalogFolder,
+    sourceFolder: requestData.sourceFolder,
+    destinationFolder: requestData.destinationFolder,
+    remoteServerURL: requestData.remoteServerURL
   }
-  console.log(req.body);
-  fs.writeFileSync("./config.json", JSON.stringify(data));
 
-  res.json({success: true});
+  try {
+    fs.writeFileSync(path.join(__dirname, "../config/config.json"), JSON.stringify(data));
+    res.json({success: true});
+  } catch (error) {
+    res.status(500).json({error: error});
+  }
 
 })
 
 router.get('/resizeAll', (req, res, next) => {
-  const paths = getFiles(config.catalogFolder);
-  paths.forEach(pathObject => {
-    resize(pathObject.path, pathObject.name);
-  })
-
+  const paths = getFiles(clientAppConfig.sourceFolder);
+  const worker = new Worker(path.join(__dirname, "../", "workers", "resizeWorker.js"));
+  worker.postMessage(paths);
   return res.status(200).json({success: true});
+});
+
+router.get('/getConfig', (req, res, next) => {
+  res.json({
+    sourceFolder: clientAppConfig.sourceFolder,
+    destinationFolder: clientAppConfig.destinationFolder,
+    remoteServerURL: clientAppConfig.remoteServerURL,
+  });
 })
 
 function getFiles(folder) {
@@ -110,7 +112,7 @@ function resize(filePath, filename) {
   let folderPath = path.dirname(filePath);
   const pathChunk = folderPath.split(/(\\|\/)/);
   folderPath = pathChunk.splice(pathChunk.length-6).join("");
-  folderPath = config.resizedImagesDestination+folderPath;
+  folderPath = clientAppConfig.destinationFolder+folderPath;
   const fullPath = path.join(folderPath, filename);
 
   if (!fs.existsSync(folderPath)) {
