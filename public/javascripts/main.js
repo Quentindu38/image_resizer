@@ -1,99 +1,154 @@
 window.onload = () => {
+
+  const socket = io("http://localhost:3000", {reconnectionDelayMax: 10000, autoConnect: false,});
+  let retryingInterval;
+
+  $(document).on('contextmenu', (event)=>{
+    event.preventDefault();
+  })
+
   const previewResizedSection = document.querySelector(
     "#previewResizedSection"
   );
-  const sendResizeCmdBtn = document.querySelector("#sendResizeCmdBtn");
-  const previewSection = document.querySelector("#previewSection");
-  const changeCatalogFolderCmdBtn = document.querySelector(
-    "#changeCatalogFolderCmdBtn"
+  const sendResizeCmdBtn = document.querySelectorAll(".sendResizeCmdBtn");
+  const submitConfigurationBtn = document.querySelector(
+    "#submitConfigurationBtn"
   );
-  const catalogFolder = document.querySelector("#catalogFolder");
+  const sourceFolder = document.querySelector("#sourceFolder");
+  const destinationFolder = document.querySelector("#destinationFolder");
+  const remoteServerURL = document.querySelector("#remoteServerURL");
+  const loadMoreBtnNext = document.querySelector("#loadMoreBtnNext");
+  const loadMoreBtnPrev = document.querySelector("#loadMoreBtnPrev");
 
-  getImages("/catalog", previewSection);
-  getImages("/catalog/resized", previewResizedSection);
+  let images = [];
+  let lastStop = 0;
+  const limitLoaded = 50;
 
-  sendResizeCmdBtn.addEventListener("click", (event) => {
-    event.preventDefault();
+  getImages("/catalog/resized");
 
-    fetch("/catalog/resizeAll", {
-      method: "GET",
-    })
-      .then((data) => {
-        if (data.status != 200) {
-          throw new Error("An error occurs - please try again");
-        }
-
-        Swal.fire(
-          "Youupi. Uploaded",
-          "Images have been resized successfully",
-          "success"
-        );
-
-        getImages("/catalog/resized", previewResizedSection);
+  sendResizeCmdBtn.forEach((btn => 
+    btn.addEventListener("click", (event) => {
+      event.preventDefault();
+  
+      fetch("/catalog/resizeAll", {
+        method: "GET",
       })
-      .catch((err) => {
-        Swal.fire("An error occurs", err.message, "success");
-      });
-  });
+        .then((data) => {
+          if (data.status != 200) {
+            throw new Error("An error occurs - please try again");
+          }
+  
+          Swal.fire(
+            "Cool :)",
+            "The resize process has started. It'll will be running in the background. Don't close the app yet",
+            "success"
+          );
+  
+          getImages("/catalog/resized");
+        })
+        .catch((err) => {
+          Swal.fire("An error occurs", err.message, "success");
+        });
+    })
+  ));
 
-  changeCatalogFolderCmdBtn.addEventListener("click", (event) => {
+
+  submitConfigurationBtn.addEventListener("click", (event) => {
     event.preventDefault();
 
-    if (catalogFolder.value == "") {
+    if (sourceFolder.value == "") {
       Swal.fire(
         "No folder set",
-        "Please set a folder string before continue",
+        "Please set the source folder string before continue",
+        "error"
+      );
+      return;
+    }
+    
+    if (destinationFolder.value == "") {
+      Swal.fire(
+        "No folder set",
+        "Please set the destination folder string before continue",
+        "error"
+      );
+      return;
+    }
+    
+    if (remoteServerURL.value == "") {
+      Swal.fire(
+        "No url set",
+        "Please enter the remote server url string before continue",
         "error"
       );
       return;
     }
 
-    const data = { catalogFolder: catalogFolder.value };
-    console.log(data);
-    fetch("/catalog/catalogFolder", {
+    const data = { sourceFolder: sourceFolder.value, destinationFolder: destinationFolder.value, remoteServerURL: remoteServerURL.value };
+
+    fetch("/catalog/config", {
       method: "POST",
       body: JSON.stringify(data),
       headers: { "Content-Type": "application/json" },
     })
       .then((data) => {
-        Swal.fire("Cool :)", "Folder changed successfully", "success").then(
+        Swal.fire("Cool :)", "Configuration saved successfully. You should close the app and start again", "success").then(
           () => {
-            getImages("/catalog", previewSection);
             getImages("/catalog/resized", previewResizedSection);
           }
         );
       })
       .catch((error) => {
-        console.log(error);
         Swal.fire("Error :(", error.message, "error");
       });
   });
 
-  function getImages(url, containerPane) {
-    containerPane.innerHTML = "";
+  loadMoreBtnNext.addEventListener("click", (event) => {
+    event.preventDefault();
+
+    if(images.length > lastStop+limitLoaded) {
+      feedPage(lastStop);
+    }
+  });
+  
+  console.log(lastStop);
+  loadMoreBtnPrev.addEventListener("click", (event) => {
+    event.preventDefault();
+
+    if(lastStop-limitLoaded > 0) {
+      feedPage(lastStop-2*limitLoaded);
+    }
+  });
+
+  function feedPage(start = 0) {
+    lastStop = start+limitLoaded;
+
+    if(images.length <= lastStop) {
+      lastStop = images.length;
+    }
+
+    previewResizedSection.innerHTML = "";
+    let imagesToLoad = images.slice(start, lastStop);
+    for (let url of imagesToLoad) {
+      showPreview(url, previewResizedSection);
+    }
+  }
+
+  (function getConfiguration() {
+    fetch('/catalog/getConfig').then(async(data) => {
+      const response = await data.json();
+      const [sourceFolderValueFromServer, destinationFolderValueFromServer, remoteServerURLValueFromServer] = [response.sourceFolder, response.destinationFolder, response.remoteServerURL];
+      sourceFolder.value = sourceFolderValueFromServer;
+      destinationFolder.value = destinationFolderValueFromServer;
+      remoteServerURL.value = remoteServerURLValueFromServer;
+    });
+  })();
+
+  function getImages(url) {
     fetch(url).then(async (data) => {
       const catalog = await data.json();
-      for (let topCategory in catalog) {
-        const topCategoryTitle = topCategory;
-        topCategory = catalog[topCategory];
-        for (let sku in topCategory) {
-          const skuTitle = sku;
-          sku = topCategory[sku];
-          for (let color in sku) {
-            const title = document.createElement("h6");
-            const colorTitle = color;
-            title.innerText = `${topCategoryTitle}/${skuTitle}/${colorTitle}`;
-            containerPane.appendChild(title);
-            color = sku[color];
-            const container = document.createElement("div");
-            container.classList = "row m-0";
-            containerPane.appendChild(container);
-            for (let url of color) {
-              showPreview(url, container);
-            }
-          }
-        }
-      }
+      lastStop = 0;
+      images = catalog;
+      feedPage();
     });
   }
 
@@ -108,11 +163,54 @@ window.onload = () => {
     imageElement.src = url;
     imageElement.classList = "card-img-top";
 
-    const previewCardBody = document.createElement("div");
-    previewCardBody.className = "card-body";
-
     previewCard.appendChild(imageElement);
     previewContainer.appendChild(previewCard);
     container.appendChild(previewContainer);
+    return previewContainer;
+  }
+
+  function outputMessage(message, status = "update", color = "white") {
+    const appConsole = $("#app-console .console");
+    const appConsoleContainer = $("#app-console");
+    appConsoleContainer.scrollTop(appConsole.height()+100);
+    const date = new Date().toDateString();
+    const output = $(
+      `<p>${message}</p>`
+    );
+    // appConsole.empty();
+    appConsole.append(output);
+  }
+
+  // Init socket for the syncker
+  initSync();
+  async function initSync() {
+
+    socket.connect();
+
+    socket.on("connect", () => {
+      clearInterval(retryingInterval);
+      outputMessage("Connection with remote server established successfully", "socket", "#29b6f6");
+    });
+
+    socket.on('message', (message) => {
+      outputMessage(message, "socket", "yellow");
+    });
+    
+    socket.on('resizeOK', (message) => {
+      Swal.fire(
+        "Success",
+        "Resizing process completed",
+        "success"
+      );
+    });
+    
+    
+    socket.on('disconnect', (message) => {
+      outputMessage("Disconnected. Reconnecting ...", "socket", "yellow");
+      retryingInterval = setInterval(async ()=>{
+        outputMessage(`Retrying in 5s`, "socket", "yellow");
+        await socket.connect();
+      }, 5000);
+    });
   }
 };
